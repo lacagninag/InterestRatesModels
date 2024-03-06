@@ -100,6 +100,12 @@ namespace HullAndWhiteOneFactor
         /// <returns>The results of the calibration.</returns>
         public EstimationResult Estimate(List<object> data, IEstimationSettings settings = null, IController controller = null, Dictionary<string, object> properties = null)
         {
+
+            // initialize the result 
+            EstimationResult result;
+            // parameters to calibrate
+            string[] names = new string[] { "Alpha", "Sigma" };
+
             InterestRateMarketData dataset = data[0] as InterestRateMarketData;
             MatrixMarketData normalVol = null;
             if (data.Count > 1)
@@ -110,11 +116,24 @@ namespace HullAndWhiteOneFactor
             double[,] zrvalue = (double[,])ArrayHelper.Concat(dataset.ZRMarketDates.ToArray(), dataset.ZRMarket.ToArray());
             zr.Expr = zrvalue;
 
+
             //todo: move to common data quality code
             if (dataset.SwaptionTenor == 0)
             {
                 Console.WriteLine("Warning SwaptionTenor not set, using default (1)");
                 dataset.SwaptionTenor = 1;
+            }
+
+            if (settings.DummyCalibration)
+            {
+                Console.WriteLine("Computing dummy calibration");
+                double[] dummySolution = { 0.1, 0.05 };
+                result = new EstimationResult(names, dummySolution)
+                {
+                    ZRX = (double[])dataset.ZRMarketDates.ToArray(),
+                    ZRY = (double[])dataset.ZRMarket.ToArray()
+                };
+                return result;
             }
 
 
@@ -133,6 +152,7 @@ namespace HullAndWhiteOneFactor
 
             int maturitiesCount = optionMaturityF.Count(x => x >= swaptionsFiltering.MinSwaptionMaturity && x <= swaptionsFiltering.MaxSwaptionMaturity);
             int durationsCount = swapDurationF.Count(x => x >= swaptionsFiltering.MinSwapDuration && x <= swaptionsFiltering.MaxSwapDuration);
+
 
             
             Console.WriteLine(string.Format("Calibrating on {0} swaptions prices [#maturiries x #durations]=[{1} x {2}]", maturitiesCount * durationsCount, maturitiesCount,durationsCount));
@@ -212,13 +232,12 @@ namespace HullAndWhiteOneFactor
                 return new EstimationResult(solution.message);
             Console.WriteLine("Solution:");
             Console.WriteLine(solution);
-            string[] names = new string[] { "Alpha", "Sigma" };
+            
 
             Console.WriteLine("SwaptionHWEstimator: hw model prices and error");
             problem.Obj(solution.x,true);
 
-            EstimationResult result = new EstimationResult(names, solution.x);
-
+            result = new EstimationResult(names, solution.x);
             result.ZRX = (double[])dataset.ZRMarketDates.ToArray();
             result.ZRY = (double[])dataset.ZRMarket.ToArray();
 
