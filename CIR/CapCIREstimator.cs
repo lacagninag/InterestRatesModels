@@ -90,20 +90,6 @@ namespace CIRProcess
         {
             InterestRateMarketData dataset = data[0] as InterestRateMarketData;
 
-            // Initialize the result 
-            EstimationResult result;
-
-            string[] names = CIR.parameterNames;
-
-            if (settings.DummyCalibration)
-            {
-                Console.WriteLine("Computing dummy calibration");
-
-                double[] dummySolution = { 0.001, 0.001, 0.001, 0.001 };
-                result = new EstimationResult(names,dummySolution);
-                return result;
-            }
-
             // Creates the context.
             Document doc = new Document();
             ProjectROV prj = new ProjectROV(doc);
@@ -140,12 +126,12 @@ namespace CIRProcess
 
             Console.WriteLine("Solution:");
             Console.WriteLine(solution);
-            
+            string[] names = CIR.parameterNames;
             Vector values = new Vector(4);
             values[Range.New(0, 2)] = solution.x;
             values[3] = problem.r0;
 
-            result = new EstimationResult(names, values);
+            EstimationResult result = new EstimationResult(names, values);
 
             return result;
         }

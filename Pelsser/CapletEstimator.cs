@@ -72,32 +72,11 @@ namespace Pelsser.Calibration
         /// <returns>The results of the calibration.</returns>
         public EstimationResult Estimate(List<object> data, IEstimationSettings settings = null, IController controller = null, Dictionary<string, object> properties = null)
         {
-            string[] names = new string[] { "alpha1", "sigma1" };
-
             InterestRateMarketData dataset = data[0] as InterestRateMarketData;
             MatrixMarketData normalVol = null;
-
-
             if (data.Count > 1)
                 normalVol = (MatrixMarketData)data[1];
             EstimationResult result;
-
-            // for the dummy calibration we just need ZRMarket data 
-            if (settings.DummyCalibration && (dataset.ZRMarket != null))
-            {
-                Console.WriteLine("Computing dummy calibration");
-
-                double[] dummySolution = { 0.1, 0.1 };
-                result = new EstimationResult(names, dummySolution);
-
-                result.ZRX = (double[])dataset.ZRMarketDates.ToArray();
-                result.ZRY = (double[])dataset.ZRMarket.ToArray();
-                result.Objects = new object[1];
-                result.Objects[0] = null;
-
-                return result;
-            }
-
             if ((dataset.ZRMarket == null) || (dataset.CapVolatility == null))
             {
                 result = new EstimationResult();
@@ -107,7 +86,6 @@ namespace Pelsser.Calibration
                 return result;
             }
 
-            
             // Backup the dates
             DateTime effectiveDate = DateTime.Now.Date;
             DateTime valuationDate = DateTime.Now.Date;
@@ -238,7 +216,7 @@ namespace Pelsser.Calibration
 
             Console.WriteLine(solution);
 
-            
+            string[] names = new string[] { "alpha1", "sigma1" };
             result = new EstimationResult(names, solution.x);
 
             result.ZRX = (double[])dataset.ZRMarketDates.ToArray();
