@@ -90,12 +90,33 @@ namespace CIRProcess
         {
             InterestRateMarketData dataset = data[0] as InterestRateMarketData;
 
+            // intialize the result
+            EstimationResult result; 
+
+            
+
             // Creates the context.
             Document doc = new Document();
             ProjectROV prj = new ProjectROV(doc);
             doc.Part.Add(prj);
 
             CapCIROptimizationProblem problem = new CapCIROptimizationProblem(dataset);
+
+            // initial guess
+            Vector x0 = new Vector(new double[] { 1, 0.01, 0.05 });
+
+            if (settings.DummyCalibration)
+            {
+                Vector valuesDummy = new Vector(4);
+                valuesDummy[Range.New(0, 2)] = x0;
+                valuesDummy[3] = problem.r0;
+
+                result = new EstimationResult(CIR.parameterNames, valuesDummy);
+
+                return result;
+            }
+
+
             IOptimizationAlgorithm solver = new QADE();
             IOptimizationAlgorithm solver2 = new SteepestDescent();
 
@@ -107,7 +128,6 @@ namespace CIRProcess
             o.controller = controller;
             SolutionInfo solution = null;
 
-            Vector x0 = new Vector(new double[] { 1, 0.01, 0.05 });
             solution = solver.Minimize(problem, o, x0);
             if (solution.errors)
                 return new EstimationResult(solution.message);
@@ -131,7 +151,7 @@ namespace CIRProcess
             values[Range.New(0, 2)] = solution.x;
             values[3] = problem.r0;
 
-            EstimationResult result = new EstimationResult(names, values);
+            result = new EstimationResult(names, values);
 
             return result;
         }
