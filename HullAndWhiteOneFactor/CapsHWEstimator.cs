@@ -102,6 +102,26 @@ namespace HullAndWhiteOneFactor
         {
             InterestRateMarketData dataset = data[0] as InterestRateMarketData;
 
+            // names of the parameters
+            string[] names = { "Alpha", "Sigma" };
+
+            // initialize the result 
+            EstimationResult result;
+
+            // dummy calibration
+            if (settings.DummyCalibration)
+            {
+                Console.WriteLine("Computing dummy calibration");
+                double[] dummySolution = { 0.1, 0.05 };
+                result = new EstimationResult(names, dummySolution);
+
+                result.ZRX = (double[])dataset.ZRMarketDates.ToArray();
+                result.ZRY = (double[])dataset.ZRMarket.ToArray();
+
+                return result;
+            }
+
+
             PFunction zr = new PFunction(null);
             zr.VarName = "zr";
 
@@ -200,12 +220,10 @@ namespace HullAndWhiteOneFactor
                 return new EstimationResult(solution.message);
             Console.WriteLine("Solution:");
             Console.WriteLine(solution);
-            string[] names = new string[] { "Alpha", "Sigma" };
-            
-            
+
             //solution.x[0] *= 3;
 
-            EstimationResult result = new EstimationResult(names, solution.x);
+            result = new EstimationResult(names, solution.x);
 
             result.ZRX = (double[])dataset.ZRMarketDates.ToArray();
             result.ZRY = (double[])dataset.ZRMarket.ToArray();
