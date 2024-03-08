@@ -100,10 +100,28 @@ namespace HullAndWhiteOneFactor
         /// <returns>The results of the calibration.</returns>
         public EstimationResult Estimate(List<object> data, IEstimationSettings settings = null, IController controller = null, Dictionary<string, object> properties = null)
         {
+            // initialize the result 
+            EstimationResult result;
+            // parameters to calibrate
+            string[] names = new string[] { "Alpha", "Sigma" };
+
             InterestRateMarketData dataset = data[0] as InterestRateMarketData;
             MatrixMarketData normalVol = null;
             if (data.Count > 1)
                 normalVol = (MatrixMarketData)data[1];
+
+            // dummy calibration 
+            if (settings.DummyCalibration)
+            {
+                Console.WriteLine("Computing dummy calibration");
+                double[] dummySolution = { 0.1, 0.05 };
+                result = new EstimationResult(names, dummySolution)
+                {
+                    ZRX = (double[])dataset.ZRMarketDates.ToArray(),
+                    ZRY = (double[])dataset.ZRMarket.ToArray()
+                };
+                return result;
+            }
 
             PFunction zr = new PFunction(null);
             // Loads the zero rate.
@@ -212,12 +230,11 @@ namespace HullAndWhiteOneFactor
                 return new EstimationResult(solution.message);
             Console.WriteLine("Solution:");
             Console.WriteLine(solution);
-            string[] names = new string[] { "Alpha", "Sigma" };
 
             Console.WriteLine("SwaptionHWEstimator: hw model prices and error");
             problem.Obj(solution.x,true);
 
-            EstimationResult result = new EstimationResult(names, solution.x);
+            result = new EstimationResult(names, solution.x);
 
             result.ZRX = (double[])dataset.ZRMarketDates.ToArray();
             result.ZRY = (double[])dataset.ZRMarket.ToArray();
